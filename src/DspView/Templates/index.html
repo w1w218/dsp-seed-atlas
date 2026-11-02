@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星系浏览器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div id="alert" class="alert ok">加载中…</div>
+  <div id="toolbar">
+    <span id="title" class="title"></span>
+    <input id="search" placeholder="搜索 行星/恒星/id" autocomplete="off">
+    <select id="f-star"><option value="">全部恒星</option></select>
+    <select id="f-theme"><option value="">全部主题</option></select>
+    <label><input type="checkbox" id="f-scanned"> 仅已探索</label>
+    <label><input type="checkbox" id="f-hive"> 有巢穴</label>
+    <label><input type="checkbox" id="f-plan"> 有规划</label>
+    <label><input type="checkbox" id="f-dyson"> 有戴森球</label>
+    <button id="toggle3d" class="btn" title="显示 / 隐藏 3D 画面">3D 开</button>
+    <span id="count" class="count"></span>
+  </div>
+</header>
+<main>
+  <div id="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  <aside id="side">
+    <div id="three"></div>
+    <div id="detail" class="detail">点击行星查看详情</div>
+    <div id="legend" class="legend"></div>
+    <div id="hint" class="hint">双击恒星进入恒星系 · ESC 回退 · 双击「规划」单元格可编辑</div>
+  </aside>
+</main>
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script src="galaxy-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

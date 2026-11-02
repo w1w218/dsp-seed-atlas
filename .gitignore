@@ -1,0 +1,37 @@
+# 临时目录（一次性脚本/中间产物/可再生成输出）
+_scratch/
+
+# .NET 构建产物
+**/bin/
+**/obj/
+**/packages/
+*.user
+*.suo
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# 反编译工具缓存（ilspy_dump 已归入 _scratch）
+# （如再生成请放入 _scratch/）
+
+# 运行时生成的可再算输出（如需保留请移入正式目录并改名）
+src/data/model-*.csv
+src/data/save-*.csv
+src/data/*-planets.csv
+
+# 运行时/诊断输出（可再生成，勿提交）
+src/data/_1502_dirs.json
+**/seed*-single.csv
+
+# 私有参考资料（反编译产物 / 第三方参考项目，只留本地）
+ref/
+
+# 游戏原始资源块（代码只读 XML）
+**/prototypes/*.dat
+
+# 其他
+.vs/
+*.dsv
+*.log
+*.bak-*

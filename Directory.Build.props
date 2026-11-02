@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    游戏安装目录配置（所有工程共用）
+      优先级：命令行 /p:DspGameDir=...  >  环境变量 DSP_GAME_DIR
+    **必须自行配置**（仓库不含游戏程序集）；未配置时构建会直接报错并提示。
+    文件夹结构：<游戏目录>\DSPGAME_Data\Managed\Assembly-CSharp.dll
+  -->
+  <PropertyGroup>
+    <DspGameDir Condition="'$(DspGameDir)' == ''">$(DSP_GAME_DIR)</DspGameDir>
+    <DspManagedDir>$(DspGameDir)\DSPGAME_Data\Managed</DspManagedDir>
+  </PropertyGroup>
+
+  <Target Name="DspCheckGameDir" BeforeTargets="ResolveAssemblyReferences"
+          Condition="'$(DspNeedsGameDll)' == 'true'">
+    <Error Condition="!Exists('$(DspManagedDir)\Assembly-CSharp.dll')"
+           Text="找不到游戏程序集：$(DspManagedDir)\Assembly-CSharp.dll&#13;&#10;请设置环境变量 DSP_GAME_DIR 指向戴森球计划安装目录（或 MSBuild /p:DspGameDir=...）后重新构建。&#13;&#10;当前取值：$(DspGameDir)" />
+  </Target>
+</Project>
