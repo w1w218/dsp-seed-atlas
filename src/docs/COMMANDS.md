@@ -23,16 +23,20 @@
 ```powershell
 src\scripts\dsp.ps1 status
 src\scripts\dsp.ps1 init  84272982 -Mult 0.1
-src\scripts\dsp.ps1 plan  84272982 -Seconds 300
-src\scripts\dsp.ps1 merge 84272982 -Save "my-save.dsv"
-src\scripts\dsp.ps1 serve 84272982
+src\scripts\dsp.ps1 plan  84272982 -Seconds 300 [-Threads N] [-LnsWindow 12] [-LnsRounds 10] [-SkipLns]
+src\scripts\dsp.ps1 merge 84272982 -Save "982-Z01-000.dsv"     # 文件名或完整路径均可
+src\scripts\dsp.ps1 serve 84272982 [-Port 8765]
 src\scripts\dsp.ps1 stop
-src\scripts\dsp.ps1 csv   -Save "my-save.dsv"
-src\scripts\dsp.ps1 all   84272982 -Save "my-save.dsv"
+src\scripts\dsp.ps1 csv   -Save "982-Z01-000.dsv"
+src\scripts\dsp.ps1 all   84272982 -Save "982-Z01-000.dsv"
 ```
 
+- **存档选择**：回车 = 记忆目录下**最新**存档（自动排除 `_autosave*` 与 `_lastexit_.dsv`）；
+  只输文件名即可（如 `982-Z01-000.dsv`）；输入完整路径成功后会把该目录记为默认
+- **融合前校验**：脚本用 `DspSave --header` 读存档头，种子 / 恒星数与 `galaxy.json` 不一致直接拒绝
+- **日志**：按任务分文件（`_scratch\logs\<时间戳>-<动作>.log`），失败时打印末尾 12 行
 - 输出根 = `DspSearcher\bin\Debug\net48\search-out`（与 Searcher 默认一致，已有数据直接可见）
-- 状态记忆：`_scratch\dsp-state.json`（上次种子 / 倍率 / 规划秒数 / 存档）
+- 状态记忆：`_scratch\dsp-state.json`（种子 / 倍率 / 规划秒数 / 线程 / LNS / 存档 / 存档目录）
 - **每个 exe 自动以自身 bin 目录为工作目录**（依赖 `prototypes\` / `data\`；手动调用时也必须先 cd 到 bin，否则报 `Could not find Prototypes\ThemeProtoSet.xml`）
 - x86 / x64 由脚本固定，无需选择；交互菜单在非控制台（stdin 重定向）下会提示改用子命令
 
@@ -137,9 +141,13 @@ DspPlan.exe apply  "$O\single-84272982\galaxy.json"
 ## 五、`DspSave`（net8 x64，存档解析 / 融合）★ 大档必用
 
 ```powershell
-DspSave.exe --save  <dsv> [--out <csv>] [--space 0/1] [--mine 0/1]   # → saveX*.csv
-DspSave.exe --merge <dsv> --galaxy <galaxy.json>                      # → 写回 galaxy.json
+DspSave.exe --save   <dsv> [--out <csv>] [--space 0/1] [--mine 0/1]   # → saveX*.csv
+DspSave.exe --merge  <dsv> --galaxy <galaxy.json>                      # → 写回 galaxy.json
+DspSave.exe --header <dsv>                                             # → 单行 JSON（毫秒级，只读头部）
 ```
+
+- `--header` 输出 `{gameName, seed, starCount, resourceMultiplier, gameTick, starNameLCID}`，
+  供脚本做「存档与 galaxy.json 是否同一局」预校验；不加载原型表、不解析行星段，931 MB 档也是毫秒级
 
 - `--merge` 更新：恒星/行星中文名、`scanned`、`landPercent`、`veins[].currentAmount`、
   `spaceLevel`、`collectors`、`hasFactory`、`blackHoleBases`(本地) / `blackHoleBasesRelay`(全局)、
