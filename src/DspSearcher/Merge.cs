@@ -195,6 +195,7 @@ namespace DspSearcher
                     int pid = pl.Value<int>("id");
                     PlanetData pdata;
                     bool hasPlanetData = planetById.TryGetValue(pid, out pdata);
+                    bool isScanned = byId.TryGetValue(pid, out var sp) && sp != null;
                     if (nameOverride != null && nameOverride.TryGetValue(pid, out var ovPlanet))
                     {
                         pl["name"] = ovPlanet;
@@ -209,13 +210,25 @@ namespace DspSearcher
                     }
 
                     // 工厂段（仅玩家造访过的行星有）：已建 / 采集器 / 本地面雾基地
-                    if (facByPlanet != null && facByPlanet.TryGetValue(pid, out var fac))
+                    FactorySummary fac = null;
+                    if (facByPlanet != null) facByPlanet.TryGetValue(pid, out fac);
+                    if (fac != null)
                     {
                         pl["hasFactory"] = fac.EntityCount > 0;
                         pl["collectors"] = fac.ProtoIdCount.TryGetValue(2105, out int cc) ? cc : 0;
                         pl["blackHoleBases"] = fac.GroundBases;
                     }
+                    else if (isScanned)
+                    {
+                        // 已扫描但无工厂段（气巨 / 未造厂）：显式清零，避免上次 merge 的旧值残留
+                        pl["hasFactory"] = false;
+                        pl["collectors"] = 0;
+                        pl["blackHoleBases"] = 0;
+                    }
+
+                    // 黑雾 relay 口径：有活跃记录写实际数；已扫描行星无记录 → 0（基地清理后必须归零）
                     if (relayByPlanet.TryGetValue(pid, out int rb)) pl["blackHoleBasesRelay"] = rb;
+                    else if (isScanned) pl["blackHoleBasesRelay"] = 0;
 
                     // 气巨/冰巨气体（每采集站速率 /s，已乘恒星资源系数^0.3；采集站上限 40）
                     if (hasPlanetData && pdata.gasItems != null && pdata.gasItems.Length > 0)
@@ -231,7 +244,6 @@ namespace DspSearcher
                         pl["gas"] = new JObject { ["items"] = gi, ["speeds"] = gs };
                     }
 
-                    bool isScanned = byId.TryGetValue(pid, out var sp) && sp != null;
                     pl["scanned"] = isScanned;
                     if (!isScanned) continue;
                     scannedN++;
