@@ -226,9 +226,11 @@ namespace DspSearcher
                         pl["blackHoleBases"] = 0;
                     }
 
-                    // 黑雾 relay 口径：有活跃记录写实际数；已扫描行星无记录 → 0（基地清理后必须归零）
+                    // 黑雾 relay 口径：有活跃记录写实际数；
+                    // 只有“确认清理”（有 factory 段且 bases==0）才归零；
+                    // 其余（未登陆/没造过东西）保持原值，不臆造 0
                     if (relayByPlanet.TryGetValue(pid, out int rb)) pl["blackHoleBasesRelay"] = rb;
-                    else if (isScanned) pl["blackHoleBasesRelay"] = 0;
+                    else if (fac != null && fac.GroundBases == 0) pl["blackHoleBasesRelay"] = 0;
 
                     // 气巨/冰巨气体（每采集站速率 /s，已乘恒星资源系数^0.3；采集站上限 40）
                     if (hasPlanetData && pdata.gasItems != null && pdata.gasItems.Length > 0)
@@ -284,9 +286,13 @@ namespace DspSearcher
                             groupConflicts++;
                             conflicts.Add($"行星 {pid} {pl.Value<string>("name")} · {SaveParser.VeinNames[t]}: 组 模型{mg} / 存档{grp[t]}");
                         }
-                        v["groups"] = facV != null ? facV.VeinGroupCount[t] : grp[t];
-                        v["currentAmount"] = facV != null ? facV.VeinAmount[t] : amt[t];
-                        if (facV != null)
+                        // 工厂段存在但该矿种的运行时副本为空（解析缺失）→ 回退存档值，避免误写 0（显示成采空）
+                        bool useFactory = facV != null && !(facV.VeinAmount[t] == 0 && amt[t] > 0);
+                        if (useFactory && facV.VeinGroupCount[t] == 0 && grp[t] > 0) useFactory = false;
+
+                        v["groups"] = useFactory ? facV.VeinGroupCount[t] : grp[t];
+                        v["currentAmount"] = useFactory ? facV.VeinAmount[t] : amt[t];
+                        if (useFactory)
                         {
                             v["plannedAmount"] = facV.VeinPlanned[t];
                             v["unplannedAmount"] = facV.VeinUnplanned[t];
@@ -294,7 +300,7 @@ namespace DspSearcher
                         }
                         else
                         {
-                            // 无工厂段数据（未建厂/未解析）：无采矿机 → 整块储量计入未规划采集
+                            // 无工厂段（或运行时副本缺失）：无采矿机 → 整块储量计入未规划采集
                             v["plannedAmount"] = 0L;
                             v["unplannedAmount"] = amt[t];
                             v["amountSource"] = "save";

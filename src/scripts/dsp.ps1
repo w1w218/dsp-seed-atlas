@@ -278,6 +278,28 @@ function Do-Init {
         '--out', $dir, '--json', $gal
     ) (Get-LogFile 'init')
     Say-Ok ('产出 ' + $gal)
+
+    # 规划自动回填：out\plan-search.json（apply 的输入）存在且属于当前 seed 时恢复 40 槽
+    $ckpt = Join-Path $PlanOut 'plan-search.json'
+    if (-not (Test-Path $ckpt)) {
+        Say-Warn '没有历史规划记录（out\plan-search.json），跳过规划回填'
+        return
+    }
+    $ckSeed = ''
+    try {
+        $ck = Get-Content $ckpt -Raw -Encoding UTF8 | ConvertFrom-Json
+        $ckSeed = [string]$ck.seed
+        if (($ckSeed -eq '' -or $ckSeed -eq '0') -and $ck.galaxy -match 'single-(\d+)') { $ckSeed = $Matches[1] }
+    } catch { }
+    if ($ckSeed -eq $seed) {
+        Say-Head ('自动回填规划（bestCost=' + [math]::Round([double]$ck.bestCost, 0) + '）')
+        Invoke-Step $ExePlan @('apply', $gal) (Get-LogFile 'init-apply')
+        Say-Ok '规划已回填（如需存档现状，再执行 3) 存档融合）'
+    } elseif ($ckSeed) {
+        Say-Warn ('规划记录属于 seed=' + $ckSeed + '，与当前 seed=' + $seed + ' 不同，已跳过')
+    } else {
+        Say-Warn '规划记录缺少 seed 信息，已跳过（可手动 DspPlan apply）'
+    }
 }
 
 function Do-Plan {
